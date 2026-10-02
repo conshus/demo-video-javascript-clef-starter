@@ -44,9 +44,6 @@ async function getDispatchSessionId() {
   return session.sessionId;
 }
 
-// Initialize the TypeSafe Client (automatically reads TYPESAFE_API_KEY from .env)
-const jev = new TypeSafeClient();
-
 // Employee Dashboard Route & Auth
 app.get('/dashboard', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'dashboard.html'));

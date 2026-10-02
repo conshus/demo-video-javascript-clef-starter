@@ -1,45 +1,72 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Agent Dashboard</title>
+  <title>Adjuster Command Center</title>
   <link rel="stylesheet" href="styles.css">
   <script src="https://video.standard.vonage.com/v2/js/opentok.min.js"></script>
 </head>
-
-<body>
-
+<body class="dashboard-body">
   <div class="dashboard-layout">
+    
+    <!-- Left Stage: Video Consult & Claim File -->
     <main class="dashboard-main">
-      <header>
-        <h2>Active Support Call</h2>
-        <div id="agent-video-controls" style="display: none; gap: 0.5rem;">
-          <button id="agent-toggle-audio"
-            style="background: var(--surface); color: var(--text); border: 1px solid var(--border);">Mute</button>
-          <button id="agent-toggle-video"
-            style="background: var(--surface); color: var(--text); border: 1px solid var(--border);">Stop
-            Camera</button>
-          <button id="agent-end-call" class="btn-danger">End Call</button>
+      <header class="dashboard-header">
+        <div>
+          <h2>Senior Adjuster Workstation</h2>
+          <p id="call-status">Status: Waiting for incoming claims...</p>
+        </div>
+        <div id="agent-controls" style="display: none; gap: 0.5rem;">
+          <button id="agent-toggle-audio" class="btn-secondary">Mute</button>
+          <button id="agent-toggle-video" class="btn-secondary">Stop Video</button>
+          <button id="agent-end-call" class="btn-danger">End Consultation</button>
         </div>
       </header>
+
+      <!-- Video Call Grid -->
       <section class="video-layout">
-        <div id="subscriber-container" class="video-box">Waiting for customer stream...</div>
-        <div id="publisher-container" class="video-box">Your camera</div>
+        <div id="subscriber-container" class="video-box">
+          <p>Customer Stream Unavailable</p>
+        </div>
+        <div id="publisher-container" class="video-box agent-box">
+          <p>Adjuster Camera</p>
+        </div>
+      </section>
+
+      <!-- Active Claim Context Pane -->
+      <section id="active-claim-panel" class="claim-panel" style="display: none;">
+        <h3>Active Incident File</h3>
+        <div class="claim-details-grid">
+          <div><strong>Policyholder:</strong> <span id="agent-cust-name">-</span></div>
+          <div><strong>Policy Number:</strong> <span id="agent-policy-num">-</span></div>
+          <div><strong>Vehicle:</strong> <span id="agent-vehicle-model">-</span></div>
+          <div><strong>Clef Classification:</strong> <span id="agent-clef-damage" class="badge-danger">-</span></div>
+        </div>
+        <div class="photo-inspect-tray" id="agent-photo-tray"></div>
       </section>
     </main>
 
+    <!-- Right Sidebar: Escalation Queue -->
     <aside class="dashboard-sidebar">
-      <h3>Escalation Queue</h3>
+      <h3>Priority Triage Queue</h3>
+      <p class="sidebar-sub">Real-time alerts broadcast via Vonage Signals</p>
       <hr style="margin: 1rem 0; border: none; border-top: 1px solid var(--border-color);">
-      <div id="dashboard-alerts" aria-live="polite">
-        <!-- JS injects escalation cards here -->
-      </div>
+      <div id="dashboard-alerts" class="alerts-container"></div>
     </aside>
   </div>
 
+  <!-- Fullscreen Photo Modal -->
+  <dialog id="photo-dialog" class="deck-dialog">
+    <header class="deck-header">
+      <h3>High-Resolution Damage Evidence</h3>
+      <button type="button" class="close-btn" commandfor="photo-dialog" command="close">✕</button>
+    </header>
+    <div style="text-align: center; padding: 1rem;">
+      <img id="enlarged-img" src="" alt="Damage Evidence" style="max-width: 100%; max-height: 70vh; border-radius: 8px;">
+    </div>
+  </dialog>
+
   <script src="dashboard.js"></script>
 </body>
-
 </html>

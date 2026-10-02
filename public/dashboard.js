@@ -1,165 +1,132 @@
-let applicationId;
-let customerSession;
-let publisher;
-let isAgentAudioMuted = false;
-let isAgentVideoStopped = false;
-
-// DOM Elements
+let applicationId, dispatchSession, customerSession, publisher;
 const dashboardAlerts = document.getElementById('dashboard-alerts');
-const publisherEl = document.getElementById('publisher-container');
 const subscriberEl = document.getElementById('subscriber-container');
-const endCallBtn = document.getElementById('agent-end-call');
-const videoControls = document.getElementById('agent-video-controls');
-const toggleAudioBtn = document.getElementById('agent-toggle-audio');
-const toggleVideoBtn = document.getElementById('agent-toggle-video');
+const publisherEl = document.getElementById('publisher-container');
+const agentControls = document.getElementById('agent-controls');
+const activeClaimPanel = document.getElementById('active-claim-panel');
+const callStatus = document.getElementById('call-status');
 
 async function initializeDashboard() {
-    const res = await fetch('/api/auth/dispatch').then(r => r.json());
+  const res = await fetch('/api/auth/dispatch').then(r => r.json());
+  applicationId = res.applicationId;
 
-    applicationId = res.applicationId;
-    let dispatchSessionId = res.dispatchSessionId;
-    let dispatchToken = res.dispatchToken;
+  dispatchSession = OT.initSession(applicationId, res.dispatchSessionId);
 
-    let dispatchSession = OT.initSession(applicationId, dispatchSessionId);
+  dispatchSession.on('signal:escalation', (event) => {
+    const payload = JSON.parse(event.data);
+    showEscalationCard(payload);
+  });
 
-    dispatchSession.on('signal:escalation', (event) => {
-        console.log('Received escalation signal:', event.data);
-        const payload = JSON.parse(event.data);
-        showEscalationCard(payload);
-    });
+  dispatchSession.on('signal:claimed', (event) => {
+    const payload = JSON.parse(event.data);
+    removeEscalationCard(payload.customerId);
+  });
 
-    dispatchSession.on('signal:claimed', (event) => {
-        const payload = JSON.parse(event.data);
-        removeEscalationCard(payload.customerId);
-    });
-
-    dispatchSession.connect(dispatchToken, (error) => {
-        if (error) {
-            console.error('Failed to connect to Dispatch Session:', error);
-        } else {
-            console.log('Employee connected to Dispatch. Waiting for escalations...');
-        }
-    });
+  dispatchSession.connect(res.dispatchToken, (err) => {
+    if (err) console.error("Failed to connect to dispatch:", err);
+  });
 }
 
 function showEscalationCard(data) {
-    // Prevent duplicates
-    if (document.getElementById(`escalation-${data.customerId}`)) return;
+  if (document.getElementById(`card-${data.customerId}`)) return;
 
-    const card = document.createElement('article');
-    card.id = `escalation-${data.customerId}`;
-    card.className = 'escalation-card';
-    card.innerHTML = `
-    <h3>Escalation Alert</h3>
-    <p><strong>Sentiment:</strong> ${data.sentiment}</p>
-    <p><strong>Frustration Level:</strong> ${data.frustrationLevel}</p>
-    <p><strong>Message:</strong> "${data.lastMessage}"</p>
-    <button onclick="acceptEscalation('${data.customerId}', '${data.sessionId}')">
-      Answer Call
+  const card = document.createElement('article');
+  card.id = `card-${data.customerId}`;
+  card.className = 'escalation-card alert-glow';
+  card.innerHTML = `
+    <div class="badge-danger">URGENT: ${data.evaluation.damage_type.toUpperCase()}</div>
+    <h4>${data.user.name}</h4>
+    <p><strong>Vehicle:</strong> ${data.user.vehicle}</p>
+    <p><strong>Part:</strong> ${data.evaluation.vehicle_part}</p>
+    <p><strong>Tow Required:</strong> ${data.evaluation.requires_tow ? 'YES' : 'NO'}</p>
+    <button class="btn-primary" onclick="claimIncident('${data.customerId}', '${data.sessionId}', ${JSON.stringify(data).replace(/"/g, '&quot;')})">
+      Accept & Join Video
     </button>
   `;
-    dashboardAlerts.appendChild(card);
+  dashboardAlerts.appendChild(card);
 }
 
-function removeEscalationCard(customerId) {
-    const card = document.getElementById(`escalation-${customerId}`);
-    if (card) card.remove();
+function removeEscalationCard(id) {
+  const el = document.getElementById(`card-${id}`);
+  if (el) el.remove();
 }
 
-// Ensure acceptEscalation is available globally for the inline onclick handler
-window.acceptEscalation = async function (customerId, customerSessionId) {
-    console.log('customerSessionId: ', customerSessionId);
-    // Tell backend to send 'signal:claimed'
-    await fetch('/api/escalate/claim', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ customerId })
+window.claimIncident = async function(customerId, customerSessionId, fullPayload) {
+  // Claim incident across all dispatch consoles
+  await fetch('/api/escalate/claim', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ customerId })
+  });
+
+  removeEscalationCard(customerId);
+
+  // Populate Claim File UI
+  activeClaimPanel.style.display = 'block';
+  document.getElementById('agent-cust-name').textContent = fullPayload.user.name;
+  document.getElementById('agent-policy-num').textContent = fullPayload.user.policy;
+  document.getElementById('agent-vehicle-model').textContent = fullPayload.user.vehicle;
+  document.getElementById('agent-clef-damage').textContent = `${fullPayload.evaluation.damage_type} (${fullPayload.evaluation.vehicle_part})`;
+
+  const tray = document.getElementById('agent-photo-tray');
+  tray.innerHTML = '';
+  fullPayload.imageUrls.forEach(url => {
+    const img = document.createElement('img');
+    img.src = url;
+    img.className = 'thumb-inspect';
+    img.onclick = () => {
+      document.getElementById('enlarged-img').src = url;
+      document.getElementById('photo-dialog').showModal();
+    };
+    tray.appendChild(img);
+  });
+
+  // Get publisher token for customer's session
+  const { token } = await fetch('/api/auth/customer-token', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ sessionId: customerSessionId })
+  }).then(r => r.json());
+
+  // Join the Customer's 1:1 Vonage Session
+  customerSession = OT.initSession(applicationId, customerSessionId);
+
+  customerSession.on('streamCreated', (event) => {
+    subscriberEl.innerHTML = '';
+    customerSession.subscribe(event.stream, subscriberEl, {
+      insertMode: 'append', width: '100%', height: '100%'
     });
+    callStatus.textContent = `In active consultation with ${fullPayload.user.name}`;
+  });
 
-    removeEscalationCard(customerId);
+  customerSession.on('connectionDestroyed', () => {
+    resetStage();
+  });
 
-    // Get a fresh publisher token for this specific customer session
-    const { token } = await fetch('/api/auth/customer-token', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ sessionId: customerSessionId })
-    }).then(r => r.json());
+  customerSession.connect(token, (err) => {
+    if (err) return console.error(err);
 
-    // Connect to the Customer Session
-    customerSession = OT.initSession(applicationId, customerSessionId);
-
-    videoControls.style.display = 'flex'; // Show video controls
-
-    customerSession.on('streamCreated', (event) => {
-        subscriberEl.innerHTML = ''; // Clear waiting text
-        customerSession.subscribe(event.stream, subscriberEl, {
-            insertMode: 'append', width: '100%', height: '100%'
-        }, (error) => {
-            if (error) console.error('Failed to subscribe:', error);
-        });
+    publisherEl.innerHTML = '';
+    publisher = OT.initPublisher(publisherEl, {
+      insertMode: 'append', width: '100%', height: '100%'
     });
-
-    // If the customer hangs up first, clean up the dashboard
-    customerSession.on('connectionDestroyed', () => {
-        resetVideoStage();
-    });
-
-    customerSession.connect(token, (error) => {
-        if (error) {
-            console.error('Failed to connect to Customer Session:', error);
-            return;
-        }
-
-        publisherEl.innerHTML = ''; // Clear waiting text
-        publisher = OT.initPublisher(publisherEl, {
-            insertMode: 'append', width: '100%', height: '100%'
-        }, (pubError) => {
-            if (pubError) console.error('Failed to init publisher:', pubError);
-        });
-
-        customerSession.publish(publisher, (pubError) => {
-            if (pubError) console.error('Failed to publish stream:', pubError);
-            else console.log('Successfully publishing to customer!');
-        });
-    });
+    customerSession.publish(publisher);
+    agentControls.style.display = 'flex';
+  });
 };
 
-
-toggleAudioBtn.addEventListener('click', (e) => {
-    if (!publisher) return;
-    isAgentAudioMuted = !isAgentAudioMuted;
-    publisher.publishAudio(!isAgentAudioMuted);
-    e.target.textContent = isAgentAudioMuted ? "Unmute" : "Mute";
-});
-
-toggleVideoBtn.addEventListener('click', (e) => {
-    if (!publisher) return;
-    isAgentVideoStopped = !isAgentVideoStopped;
-    publisher.publishVideo(!isAgentVideoStopped);
-    e.target.textContent = isAgentVideoStopped ? "Start Camera" : "Stop Camera";
-});
-
-
-// Handle agent clicking the disconnect button
-endCallBtn.addEventListener('click', () => {
-    resetVideoStage();
-});
-
-// Reusable cleanup function
-function resetVideoStage() {
-    if (customerSession) {
-        customerSession.disconnect();
-        customerSession = null;
-    }
-    // Reset UI
-    videoControls.style.display = 'none';
-    toggleAudioBtn.textContent = "Mute";
-    toggleVideoBtn.textContent = "Stop Camera";
-    isAgentAudioMuted = false;
-    isAgentVideoStopped = false;
-    publisher = null; // Clear the publisher reference
-    subscriberEl.innerHTML = 'Waiting for customer stream...';
-    publisherEl.innerHTML = 'Your camera';
+function resetStage() {
+  if (customerSession) {
+    customerSession.disconnect();
+    customerSession = null;
+  }
+  agentControls.style.display = 'none';
+  activeClaimPanel.style.display = 'none';
+  subscriberEl.innerHTML = '<p>Customer Stream Unavailable</p>';
+  publisherEl.innerHTML = '<p>Adjuster Camera</p>';
+  callStatus.textContent = 'Status: Waiting for incoming claims...';
 }
+
+document.getElementById('agent-end-call').addEventListener('click', resetStage);
 
 initializeDashboard();

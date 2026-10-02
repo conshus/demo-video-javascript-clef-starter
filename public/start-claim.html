@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Submit Vehicle Claim</title>
+  <link rel="stylesheet" href="styles.css">
+  <script src="https://video.standard.vonage.com/v2/js/opentok.min.js"></script>
+</head>
+<body class="mobile-body">
+
+  <!-- Policy Header Card -->
+  <section class="claim-policy-card">
+    <div class="badge">Verified Policyholder</div>
+    <h3 id="policy-user-name">Loading...</h3>
+    <div class="policy-details">
+      <span><strong>Policy:</strong> <span id="policy-number">...</span></span>
+      <span><strong>Vehicle:</strong> <span id="policy-vehicle">...</span></span>
+    </div>
+  </section>
+
+  <!-- Primary Workflow Container -->
+  <main class="claim-stage" id="claim-stage">
+    
+    <!-- Initial State: Start Claim Button -->
+    <div id="start-step" class="step-container">
+      <p class="instruction-text">Tap below to open your camera and capture up to 4 photos of the vehicle damage for AI assessment.</p>
+      <button id="btn-start-inspection" class="btn-primary btn-large">Start Camera Inspection</button>
+    </div>
+
+    <!-- Active Camera & Inspection View -->
+    <div id="camera-step" class="step-container" style="display: none;">
+      <div id="customer-camera-preview" class="camera-viewport">
+        <!-- Vonage Video Publisher injected here -->
+      </div>
+
+      <div class="camera-actions">
+        <button id="btn-snap-photo" class="btn-snap">📸 Snap Photo (<span id="photo-count">0</span>/4)</button>
+      </div>
+
+      <!-- Photo Gallery (Max 4) -->
+      <div class="gallery-tray" id="gallery-tray"></div>
+
+      <button id="btn-submit-claim" class="btn-primary btn-large" disabled>
+        Submit Assessment
+      </button>
+    </div>
+
+    <!-- Straight-Through Processing: Auto-Approved State -->
+    <div id="approved-step" class="step-container" style="display: none;">
+      <div class="status-icon success">✓</div>
+      <h2>Claim Auto-Approved</h2>
+      <p id="approved-summary"></p>
+      <div class="next-steps-card">
+        <h4>Next Steps:</h4>
+        <p>A $500 direct repair deposit has been issued. Please select a certified body shop from your email notification to schedule repairs.</p>
+      </div>
+      <button onclick="window.location.reload()" class="btn-secondary">Start New Claim</button>
+    </div>
+  </main>
+
+  <!-- Escalation Offer Dialog -->
+  <dialog id="escalation-dialog" class="deck-dialog">
+    <div class="dialog-content">
+      <div class="status-icon warning">⚠️</div>
+      <h3>Severe Damage Detected</h3>
+      <p id="escalation-reasons"></p>
+      <p>Due to the severity of this collision, a Senior Claims Adjuster is available immediately via live video to dispatch towing and manage rental arrangements.</p>
+      <div class="modal-actions">
+        <button id="btn-connect-agent" class="btn-danger btn-large">Connect to Live Adjuster</button>
+        <button id="btn-decline-call" class="btn-secondary" commandfor="escalation-dialog" command="close">I'll Wait for Email</button>
+      </div>
+    </div>
+  </dialog>
+
+  <!-- Live 1:1 Video Call Overlay -->
+  <section id="live-call-stage" class="call-overlay" style="display: none;">
+    <div class="call-video-grid">
+      <!-- Agent Video on Top -->
+      <div id="agent-subscriber-container" class="video-box subscriber-box">
+        <span class="video-placeholder">Connecting to Senior Adjuster...</span>
+      </div>
+      <!-- Customer Video on Bottom -->
+      <div id="customer-publisher-container" class="video-box publisher-box"></div>
+    </div>
+
+    <!-- In-Call Mobile Controls -->
+    <footer class="call-footer">
+      <button id="btn-cycle-camera" class="btn-control">🔄 Flip Camera</button>
+      <button id="btn-toggle-video" class="btn-control">Video Off</button>
+      <button id="btn-toggle-audio" class="btn-control">Mute</button>
+      <button id="btn-end-call" class="btn-control btn-danger">End</button>
+    </footer>
+  </section>
+
+  <script src="start-claim.js"></script>
+</body>
+</html>
