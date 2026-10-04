@@ -233,31 +233,76 @@ app.post('/api/process-claim', async (req, res) => {
   // console.log('Formatted images:', formattedImages);
 
   // Call Cloudflare Clef-Flash
+  // const clefPayload = {
+  //   model: "clef-flash",
+  //   state: "Evaluate the vehicle damage in the provided 360-degree walkaround images.",
+  //   images: images, // Pass the array directly (Clef accepts up to 4)
+  //   questions: {
+  //     damage_type: {
+  //       type: "choice",
+  //       instructions: "What type of damage is present on the vehicle?",
+  //       criteria: {
+  //         scratch: "Scratch",
+  //         dent: "Dent",
+  //         shattered_glass: "Shattered Glass",
+  //         total_loss: "Total Loss",
+  //         none: "None"
+  //       }
+  //     },
+  //     vehicle_part: {
+  //       type: "choice",
+  //       instructions: "Which part of the vehicle is damaged?",
+  //       criteria: {
+  //         front_bumper: "Front Bumper",
+  //         windshield: "Windshield",
+  //         door: "Door",
+  //         unknown: "Unknown"
+  //       }
+  //     },
+  //     requires_tow: {
+  //       type: "noul",
+  //       instructions: "Does this vehicle require towing?",
+  //     }
+  //   }
+  // };
   const clefPayload = {
     model: "clef-flash",
-    state: "Evaluate the vehicle damage in the images to determine insurance claim routing.",
+    state: "Evaluate the vehicle damage in the provided 360-degree walkaround images.",
     images: images, // Pass the array directly (Clef accepts up to 4)
     questions: {
-      damage_type: {
+      severity: {
         type: "choice",
-        instructions: "What type of damage is present on the vehicle?",
+        instructions: "What is the severity of the damage present on the vehicle?",
         criteria: {
-          scratch: "Scratch",
-          dent: "Dent",
-          shattered_glass: "Shattered Glass",
-          total_loss: "Total Loss",
+          minor_cosmetic: "Minor Cosmetic",
+          moderate_drivable: "Moderate Drivable",
+          severe_total_loss: "Severe Total Loss",
           none: "None"
         }
       },
-      vehicle_part: {
-        type: "choice",
-        instructions: "Which part of the vehicle is damaged?",
-        criteria: {
-          front_bumper: "Front Bumper",
-          windshield: "Windshield",
-          door: "Door",
-          unknown: "Unknown"
-        }
+      damage_front: {
+        type: "noul",
+        instructions: "Is there damage to the front of the vehicle?",
+      },
+      damage_rear: {
+        type: "noul",
+        instructions: "Is there damage to the rear of the vehicle?",
+      },
+      damage_side: {
+        type: "noul",
+        instructions: "Is there damage to any side of the vehicle?",
+      },
+      glass_shattered: {
+        type: "noul",
+        instructions: "Is any glass shattered on the vehicle?",
+      },
+      airbags_deployed: {
+        type: "noul",
+        instructions: "Have the airbags been deployed?",
+      },
+      flat_tires: {
+        type: "noul",
+        instructions: "Does the vehicle have any flat tires?",
       },
       requires_tow: {
         type: "noul",
@@ -266,7 +311,7 @@ app.post('/api/process-claim', async (req, res) => {
     }
   };
 
-  console.log("State character count:", clefPayload.state.length);
+  // console.log("State character count:", clefPayload.state.length);
 
   try {
     const clefResponse = await fetch(`https://api.cloudflare.com/client/v4/accounts/${process.env.CLOUDFLARE_ACCOUNT_ID}/ai/run/@cf/cloudflare/clef-flash`, {
@@ -297,23 +342,65 @@ app.post('/api/process-claim', async (req, res) => {
 
 
     // Failsafe fallback if token/credentials are missing in local dev
-    const evaluation = clefResult.result || {
-      damage_type: images.length > 2 ? "total_loss" : "scratch",
-      vehicle_part: "front_bumper",
-      requires_tow: images.length > 2
+    // const evaluation = clefResult.result || {
+    //   damage_type: images.length > 2 ? "total_loss" : "scratch",
+    //   vehicle_part: "front_bumper",
+    //   requires_tow: images.length > 2
+    // };
+
+    const evaluation = clefResult.result.answers || {
+      severity: { choice: "minor_cosmetic" }, airbags_deployed: { noul: 0 }, flat_tires: { noul: 0 }, requires_tow: { noul: 0 }, damage_front: { noul: 0.9 }, damage_rear: { noul: 0 }
     };
 
-    // 4. Decision Rule Engine
-    const isSevere = evaluation.damage_type === "total_loss" ||
-      evaluation.damage_type === "shattered_glass" ||
-      evaluation.requires_tow === true;
+    // Build an array of damaged parts for the UI message
+    const damagedParts = [];
+    if (evaluation.damage_front.noul > 0.8) damagedParts.push("Front");
+    if (evaluation.damage_rear.noul > 0.8) damagedParts.push("Rear");
+    if (evaluation.damage_side.noul > 0.8) damagedParts.push("Side Panels");
+    if (evaluation.glass_shattered.noul > 0.8) damagedParts.push("Glass");
 
-    const decision = isSevere ? "escalate_to_human" : "straight_through_approved";
+    // Server-Side Decision Engine
+    const isSevere =
+      evaluation.severity.choice === "severe_total_loss" ||
+      evaluation.airbags_deployed.noul > 0.8 ||
+      evaluation.flat_tires.noul > 0.8 ||
+      evaluation.requires_tow.noul > 0.8;
 
-    // Cache incident details for the live adjuster
     incidentStore.set(sessionId, { user, evaluation, imageUrls });
 
-    res.json({ decision, evaluation, imageUrls });
+    if (isSevere) {
+      const issues = [];
+      if (evaluation.airbags_deployed.noul > 0.8) issues.push("Airbags Deployed");
+      if (evaluation.flat_tires.noul > 0.8) issues.push("Flat Tire(s)");
+      if (evaluation.requires_tow.noul > 0.8) issues.push("Tow Required");
+
+      res.json({
+        decision: 'escalate',
+        ui_message: `Critical safety issues detected: ${issues.join(", ")}.\nDamaged zones: ${damagedParts.join(", ") || "Multiple"}.`
+      });
+    } else if (damagedParts.length === 0 || evaluation.severity.choice === "none") {
+      res.json({
+        decision: 'no_damage',
+        ui_message: `No significant damage detected by the AI.\nVehicle appears drivable.`
+      });
+    } else {
+      res.json({
+        decision: 'approved',
+        ui_message: `Cosmetic damage detected on: ${damagedParts.join(", ") || "Vehicle Body"}.\nVehicle remains drivable.`
+      });
+    }
+
+    // Decision Rule Engine
+    // const isSevere = evaluation.damage_type === "total_loss" ||
+    //   evaluation.damage_type === "shattered_glass" ||
+    //   evaluation.requires_tow === true;
+
+    // const decision = isSevere ? "escalate_to_human" : "straight_through_approved";
+
+    // Cache incident details for the live adjuster
+    // incidentStore.set(sessionId, { user, evaluation, imageUrls });
+
+    // res.json({ decision, evaluation, imageUrls });
 
     // Return the decision and the raw Clef evaluation back to the client UI
 

@@ -6,6 +6,14 @@ const MOCK_USERS = [
 ];
 
 const currentUser = MOCK_USERS[Math.floor(Math.random() * MOCK_USERS.length)];
+
+const REQUIRED_ANGLES = [
+  "Front-Left (Driver) Corner", 
+  "Front-Right (Passenger) Corner", 
+  "Rear-Right (Passenger) Corner", 
+  "Rear-Left (Driver) Corner"
+];
+
 document.getElementById('policy-user-name').textContent = currentUser.name;
 document.getElementById('policy-number').textContent = currentUser.policy;
 document.getElementById('policy-vehicle').textContent = currentUser.vehicle;
@@ -17,6 +25,7 @@ let capturedPhotos = []; // Max 4 base64 strings
 const startStep = document.getElementById('start-step');
 const cameraStep = document.getElementById('camera-step');
 const approvedStep = document.getElementById('approved-step');
+const noDamageStep = document.getElementById('no-damage-step');
 const escalationDialog = document.getElementById('escalation-dialog');
 const liveCallStage = document.getElementById('live-call-stage');
 
@@ -47,7 +56,7 @@ function compressImage(dataUrl, quality = 0.8) {
       
       // Export as a compressed JPEG at 80% quality
       const compressedDataUri = canvas.toDataURL('image/jpeg', quality);
-      console.log("Compressed Data URI:", compressedDataUri);
+      // console.log("Compressed Data URI:", compressedDataUri);
       resolve(compressedDataUri);
     };
   });
@@ -72,6 +81,7 @@ document.getElementById('btn-start-inspection').addEventListener('click', async 
     height: '100%',
     videoSource: true,
     resolution: '640x480',
+    mirror: false,
     facingMode: 'environment', // Request mobile back camera
     publishAudio: false // No audio needed during snapshot stage
   }, (err) => {
@@ -85,6 +95,22 @@ document.getElementById('btn-start-inspection').addEventListener('click', async 
   });
 });
 
+function updateSnapButton() {
+  if (capturedPhotos.length < 4) {
+    // Update the button to prompt for the specific corner
+    snapBtn.textContent = '📸 Snap ' + REQUIRED_ANGLES[capturedPhotos.length];
+    snapBtn.disabled = false;
+  } else {
+    snapBtn.textContent = '📸 All 4 Corners Captured';
+    snapBtn.disabled = true;
+  }
+  
+  photoCountSpan.textContent = capturedPhotos.length;
+  submitBtn.disabled = capturedPhotos.length < 4;
+}
+
+updateSnapButton();
+
 // Snapshot Logic using publisher.getImgData()
 snapBtn.addEventListener('click', async () => {
   if (capturedPhotos.length >= 4) return;
@@ -96,6 +122,7 @@ snapBtn.addEventListener('click', async () => {
   const compressedJpegUri = await compressImage(fullDataUri, 0.8);
   capturedPhotos.push(compressedJpegUri);
   renderGallery();
+  updateSnapButton();
 });
 
 function renderGallery() {
@@ -103,10 +130,38 @@ function renderGallery() {
   capturedPhotos.forEach((dataUri, idx) => {
     const card = document.createElement('div');
     card.className = 'thumb-card';
-    card.innerHTML = `
-      <img src="${dataUri}" alt="Capture ${idx + 1}">
-      <button type="button" class="thumb-delete" onclick="removePhoto(${idx})">✕</button>
-    `;
+    // card.innerHTML = `
+    //   <img src="${dataUri}" alt="Capture ${idx + 1}">
+    //   <button type="button" class="thumb-delete" onclick="removePhoto(${idx})">✕</button>
+    // `;
+    const img = document.createElement('img');
+    img.src = dataUri;
+    
+    const label = document.createElement('span');
+    label.style.position = 'absolute';
+    label.style.bottom = '2px';
+    label.style.left = '2px';
+    label.style.fontSize = '0.55rem';
+    label.style.background = 'rgba(0,0,0,0.8)';
+    label.style.color = '#fff';
+    label.style.padding = '2px 4px';
+    label.style.borderRadius = '2px';
+    // Label the thumbnail with the exact corner captured
+    label.textContent = REQUIRED_ANGLES[idx].replace(" Corner", ""); 
+    
+    const delBtn = document.createElement('button');
+    delBtn.type = 'button';
+    delBtn.className = 'thumb-delete';
+    delBtn.textContent = '✕';
+    delBtn.onclick = () => {
+      capturedPhotos.splice(idx, 1);
+      renderGallery();
+      updateSnapButton();
+    };
+    
+    card.appendChild(img);
+    card.appendChild(label);
+    card.appendChild(delBtn);
     galleryTray.appendChild(card);
   });
 
@@ -140,22 +195,44 @@ submitBtn.addEventListener('click', async () => {
 
     console.log('Claim processing response:', data);
 
-    const answers = data.evaluation.answers;
 
-    if (data.decision === 'straight_through_approved') {
-      // Clean up Vonage Session
+    // The client strictly follows the server's decision
+    if (data.decision === 'straight_through_approved' || data.decision === 'approved') {
       publisher.destroy();
       cameraStep.style.display = 'none';
       approvedStep.style.display = 'flex';
       approvedStep.style.flexDirection = 'column';
-      document.getElementById('approved-summary').textContent = 
-        `Damage assessment: ${answers.damage_type.choice.toUpperCase()} to ${answers.vehicle_part.choice}.\nDrivable vehicle confirmed.`;
-    } else {
-      // Escalation required: open modal
-      document.getElementById('escalation-reasons').textContent = 
-        `Classification: ${answers.damage_type.choice.toUpperCase()} on ${answers.vehicle_part.choice}.\nTow Truck Required: ${answers.requires_tow.noul > .80 ? 'YES' : 'NO'}.`;
+      
+      // Inject the safe, server-generated message
+      document.getElementById('approved-summary').textContent = data.ui_message;
+    } else if (data.decision === 'no_damage') {
+      // Do NOT destroy the publisher here, as the user might want to use it for the live call
+      cameraStep.style.display = 'none';
+      noDamageStep.style.display = 'flex';
+      noDamageStep.style.flexDirection = 'column';
+      document.getElementById('no-damage-summary').textContent = data.ui_message;
+      
+    }  else {
+      // Inject the safe, server-generated message
+      document.getElementById('escalation-reasons').textContent = data.ui_message;
       escalationDialog.showModal();
     }
+    // const answers = data.evaluation.answers;
+
+    // if (data.decision === 'straight_through_approved') {
+    //   // Clean up Vonage Session
+    //   publisher.destroy();
+    //   cameraStep.style.display = 'none';
+    //   approvedStep.style.display = 'flex';
+    //   approvedStep.style.flexDirection = 'column';
+    //   document.getElementById('approved-summary').textContent = 
+    //     `Damage assessment: ${answers.damage_type.choice.toUpperCase()} to ${answers.vehicle_part.choice}.\nDrivable vehicle confirmed.`;
+    // } else {
+    //   // Escalation required: open modal
+    //   document.getElementById('escalation-reasons').textContent = 
+    //     `Classification: ${answers.damage_type.choice.toUpperCase()} on ${answers.vehicle_part.choice}.\nTow Truck Required: ${answers.requires_tow.noul > .80 ? 'YES' : 'NO'}.`;
+    //   escalationDialog.showModal();
+    // }
   } catch (err) {
     console.error("Claim processing error:", err);
     alert("Evaluation failed. Please try again.");
@@ -164,28 +241,26 @@ submitBtn.addEventListener('click', async () => {
   }
 });
 
-// Trigger Live Video Escalation
-document.getElementById('btn-connect-agent').addEventListener('click', async () => {
+async function escalateToLiveAgent() {
   escalationDialog.close();
+  noDamageStep.style.display = 'none';
   cameraStep.style.display = 'none';
+  
   liveCallStage.style.display = 'flex';
 
-  // Reparent publisher to in-call customer container and enable audio
   document.getElementById('customer-publisher-container').appendChild(cameraViewport);
   publisher.publishAudio(true);
 
-  // Notify backend to broadcast Vonage Signal to dispatch dashboard
   await fetch('/api/escalate/trigger', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
       customerId: currentUser.policy,
       user: currentUser,
-      sessionId
+      sessionId: sessionId
     })
   });
 
-  // Connect to session
   session.connect(token, (err) => {
     if (err) return console.error('Connection error:', err);
     session.publish(publisher);
@@ -203,7 +278,51 @@ document.getElementById('btn-connect-agent').addEventListener('click', async () 
     alert('The adjuster has ended the session.');
     window.location.reload();
   });
-});
+}
+
+// Trigger Live Video Escalation
+document.getElementById('btn-connect-agent').addEventListener('click', escalateToLiveAgent);
+document.getElementById('btn-manual-review').addEventListener('click', escalateToLiveAgent);
+
+// document.getElementById('btn-connect-agent').addEventListener('click', async () => {
+//   escalationDialog.close();
+//   cameraStep.style.display = 'none';
+//   liveCallStage.style.display = 'flex';
+
+//   // Reparent publisher to in-call customer container and enable audio
+//   document.getElementById('customer-publisher-container').appendChild(cameraViewport);
+//   publisher.publishAudio(true);
+
+//   // Notify backend to broadcast Vonage Signal to dispatch dashboard
+//   await fetch('/api/escalate/trigger', {
+//     method: 'POST',
+//     headers: { 'Content-Type': 'application/json' },
+//     body: JSON.stringify({
+//       customerId: currentUser.policy,
+//       user: currentUser,
+//       sessionId
+//     })
+//   });
+
+//   // Connect to session
+//   session.connect(token, (err) => {
+//     if (err) return console.error('Connection error:', err);
+//     session.publish(publisher);
+//   });
+
+//   session.on('streamCreated', (event) => {
+//     const subscriberContainer = document.getElementById('agent-subscriber-container');
+//     subscriberContainer.innerHTML = '';
+//     session.subscribe(event.stream, subscriberContainer, {
+//       insertMode: 'append', width: '100%', height: '100%'
+//     });
+//   });
+
+//   session.on('connectionDestroyed', () => {
+//     alert('The adjuster has ended the session.');
+//     window.location.reload();
+//   });
+// });
 
 // Mobile Video Controls
 document.getElementById('btn-cycle-camera').addEventListener('click', () => {

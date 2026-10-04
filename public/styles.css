@@ -148,8 +148,9 @@ button:disabled {
   border-radius: 12px;
   background: var(--surface-color);
   color: var(--text-primary);
+  height: 90dvh;
   width: 90vw;
-  max-width: 600px;
+  max-width: 1600px;
   box-shadow: 0 20px 40px rgba(0, 0, 0, 0.8);
 }
 
@@ -197,8 +198,12 @@ button:disabled {
 }
 
 .carousel-slide img {
-  width: 100%;
-  height: 320px;
+  /* width: 100%;
+  max-width: 1000px;
+  aspect-ratio: 16 / 9; */
+  height: 100%;
+  max-height: 70vh;
+  aspect-ratio: 9 / 16;
   object-fit: cover;
   border-radius: 8px;
 }
@@ -354,7 +359,9 @@ button:disabled {
   text-align: center;
 }
 
-#approved-summary, #escalation-reasons {
+#approved-summary,
+#escalation-reasons,
+#no-damage-summary {
   white-space: pre-line;
 }
 

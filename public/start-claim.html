@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
@@ -7,6 +8,7 @@
   <link rel="stylesheet" href="styles.css">
   <script src="https://video.standard.vonage.com/v2/js/opentok.min.js"></script>
 </head>
+
 <body class="mobile-body">
 
   <!-- Policy Header Card -->
@@ -21,15 +23,23 @@
 
   <!-- Primary Workflow Container -->
   <main class="claim-stage" id="claim-stage">
-    
+
     <!-- Initial State: Start Claim Button -->
     <div id="start-step" class="step-container">
-      <p class="instruction-text">Tap below to open your camera and capture up to 4 photos of the vehicle damage for AI assessment.</p>
+      <p class="instruction-text">
+        <strong>Capture 4 Corner Photos</strong><br>
+        Stand 10–15 feet back (5 to 7 steps) so the entire car fits inside the camera frame. Take one photo from each of
+        the 4 corners of the vehicle.
+      </p>
       <button id="btn-start-inspection" class="btn-primary btn-large">Start Camera Inspection</button>
     </div>
 
     <!-- Active Camera & Inspection View -->
     <div id="camera-step" class="step-container" style="display: none;">
+      <div class="camera-tip-banner"
+        style="background: var(--warning); color: #000; padding: 0.5rem; text-align: center; font-size: 0.85rem; font-weight: bold; border-radius: 8px 8px 0 0;">
+        💡 Tip: Make sure you can see at least two wheels and the ground underneath them.
+      </div>
       <div id="customer-camera-preview" class="camera-viewport">
         <!-- Vonage Video Publisher injected here -->
       </div>
@@ -53,9 +63,25 @@
       <p id="approved-summary"></p>
       <div class="next-steps-card">
         <h4>Next Steps:</h4>
-        <p>A $500 direct repair deposit has been issued. Please select a certified body shop from your email notification to schedule repairs.</p>
+        <p>A $500 direct repair deposit has been issued. Please select a certified body shop from your email
+          notification to schedule repairs.</p>
       </div>
       <button onclick="window.location.reload()" class="btn-secondary">Start New Claim</button>
+    </div>
+
+    <div id="no-damage-step" class="step-container" style="display: none; text-align: center;">
+      <div class="status-icon" style="color: var(--accent-primary);">🔍</div>
+      <h2>No Damage Detected</h2>
+      <p id="no-damage-summary"></p>
+
+      <div class="next-steps-card" style="margin-top: 1.5rem;">
+        <p>If you believe the AI missed the damage due to lighting, reflections, or camera angles, you can instantly
+          connect with a live adjuster for a manual video inspection.</p>
+      </div>
+
+      <button id="btn-manual-review" class="btn-danger btn-large" style="margin-bottom: 1rem;">Start Live Video
+        Inspection</button>
+      <button onclick="window.location.reload()" class="btn-secondary btn-large">Cancel Claim</button>
     </div>
   </main>
 
@@ -65,10 +91,12 @@
       <div class="status-icon warning">⚠️</div>
       <h3>Severe Damage Detected</h3>
       <p id="escalation-reasons"></p>
-      <p>Due to the severity of this collision, a Senior Claims Adjuster is available immediately via live video to dispatch towing and manage rental arrangements.</p>
+      <p>Due to the severity of this collision, a Senior Claims Adjuster is available immediately via live video to
+        dispatch towing and manage rental arrangements.</p>
       <div class="modal-actions">
         <button id="btn-connect-agent" class="btn-danger btn-large">Connect to Live Adjuster</button>
-        <button id="btn-decline-call" class="btn-secondary" commandfor="escalation-dialog" command="close">I'll Wait for Email</button>
+        <button id="btn-decline-call" class="btn-secondary" commandfor="escalation-dialog" command="close">I'll Wait for
+          Email</button>
       </div>
     </div>
   </dialog>
@@ -95,4 +123,5 @@
 
   <script src="start-claim.js"></script>
 </body>
+
 </html>
