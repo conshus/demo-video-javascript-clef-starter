@@ -234,7 +234,7 @@ app.post('/api/process-claim', async (req, res) => {
 
   // Call Cloudflare Clef-Flash
   const clefPayload = {
-    model: "clef",
+    model: "clef-flash",
     state: "Evaluate the vehicle damage in the images to determine insurance claim routing.",
     images: images, // Pass the array directly (Clef accepts up to 4)
     questions: {
@@ -269,7 +269,7 @@ app.post('/api/process-claim', async (req, res) => {
   console.log("State character count:", clefPayload.state.length);
 
   try {
-    const clefResponse = await fetch(`https://api.cloudflare.com/client/v4/accounts/${process.env.CLOUDFLARE_ACCOUNT_ID}/ai/run/@cf/cloudflare/clef`, {
+    const clefResponse = await fetch(`https://api.cloudflare.com/client/v4/accounts/${process.env.CLOUDFLARE_ACCOUNT_ID}/ai/run/@cf/cloudflare/clef-flash`, {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${process.env.CLOUDFLARE_AUTH_TOKEN}`,
