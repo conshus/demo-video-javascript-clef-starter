@@ -147,11 +147,12 @@ app.get('/api/auth/customer', async (req, res) => {
 
 // Trigger the signal only when the user clicks the opt-in button
 app.post('/api/escalate/trigger', async (req, res) => {
-  const { customerId, user, sessionId } = req.body;
+  const { customerId, user, sessionId, triggerReason } = req.body;
+  console.log('Escalation trigger received for customerId:', customerId);
   try {
     const incident = incidentStore.get(sessionId) || {
       user,
-      evaluation: { damage_type: "total_loss", vehicle_part: "frame", requires_tow: true },
+      evaluation: { severity: { choice: "total_loss" } },
       imageUrls: []
     };
 
@@ -163,7 +164,8 @@ app.post('/api/escalate/trigger', async (req, res) => {
         user: incident.user,
         sessionId,
         evaluation: incident.evaluation,
-        imageUrls: incident.imageUrls
+        imageUrls: incident.imageUrls,
+        triggerReason: triggerReason
       })
     }, dispatchSessionId);
 

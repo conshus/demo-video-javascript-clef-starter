@@ -241,7 +241,7 @@ submitBtn.addEventListener('click', async () => {
   }
 });
 
-async function escalateToLiveAgent() {
+async function escalateToLiveAgent(escalationReason) {
   escalationDialog.close();
   noDamageStep.style.display = 'none';
   cameraStep.style.display = 'none';
@@ -257,7 +257,8 @@ async function escalateToLiveAgent() {
     body: JSON.stringify({
       customerId: currentUser.policy,
       user: currentUser,
-      sessionId: sessionId
+      sessionId: sessionId,
+      triggerReason: escalationReason
     })
   });
 
@@ -281,8 +282,8 @@ async function escalateToLiveAgent() {
 }
 
 // Trigger Live Video Escalation
-document.getElementById('btn-connect-agent').addEventListener('click', escalateToLiveAgent);
-document.getElementById('btn-manual-review').addEventListener('click', escalateToLiveAgent);
+document.getElementById('btn-connect-agent').addEventListener('click', () => escalateToLiveAgent('ai_escalation'));
+document.getElementById('btn-manual-review').addEventListener('click', () => escalateToLiveAgent('customer_override'));
 
 // document.getElementById('btn-connect-agent').addEventListener('click', async () => {
 //   escalationDialog.close();

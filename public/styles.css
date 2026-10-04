@@ -451,6 +451,11 @@ button:disabled {
   box-shadow: 0 0 12px rgba(239, 68, 68, 0.3);
 }
 
+.alert-override { 
+  border-color: var(--warning); 
+  box-shadow: 0 0 12px rgba(245, 158, 11, 0.3); 
+}
+
 .badge-danger {
   display: inline-block;
   background: var(--danger);
@@ -460,6 +465,17 @@ button:disabled {
   border-radius: 4px;
   font-weight: bold;
   margin-bottom: 0.5rem;
+}
+
+.badge-warning { 
+  display: inline-block; 
+  background: var(--warning); 
+  color: #000; 
+  font-size: 0.75rem; 
+  padding: 0.2rem 0.5rem; 
+  border-radius: 4px; 
+  font-weight: bold; 
+  margin-bottom: 0.5rem; 
 }
 
 .claim-panel {
