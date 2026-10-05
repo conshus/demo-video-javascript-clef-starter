@@ -63,7 +63,7 @@ button:disabled {
 
 .btn-primary {
   background: var(--accent-primary);
-  color: #000;
+  color: var(--text-user);
 }
 
 .btn-secondary {
@@ -74,7 +74,7 @@ button:disabled {
 
 .btn-danger {
   background: var(--danger);
-  color: #fff;
+  color: var(--text-user);
 }
 
 .btn-large {
@@ -107,7 +107,7 @@ button:disabled {
 
 .portal-grid {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
   gap: 2rem;
 }
 
@@ -141,14 +141,19 @@ button:disabled {
   margin-top: 1.5rem;
 }
 
+.dialog-content h3 {
+  text-align: center;
+}
+
 /* ZERO-JS CSS SCROLL SNAP CAROUSEL */
 .deck-dialog {
   margin: auto;
+  padding: 20px;
   border: 1px solid var(--border-color);
   border-radius: 12px;
   background: var(--surface-color);
   color: var(--text-primary);
-  height: 90dvh;
+  height: auto;
   width: 90vw;
   max-width: 1600px;
   box-shadow: 0 20px 40px rgba(0, 0, 0, 0.8);
@@ -234,7 +239,7 @@ button:disabled {
 
 .carousel-nav a:hover {
   background: var(--accent-primary);
-  color: #000;
+  color: var(--text-user);
 }
 
 /* Mobile Claim Page */
@@ -255,7 +260,7 @@ button:disabled {
 .badge {
   display: inline-block;
   background: var(--success);
-  color: #000;
+  color: var(--text-user);
   font-size: 0.75rem;
   padding: 0.2rem 0.5rem;
   border-radius: 4px;
@@ -290,8 +295,8 @@ button:disabled {
 
 .btn-snap {
   width: 100%;
-  background: #fff;
-  color: #000;
+  background: var(--surface-card);
+  color: var(--text-primary);
   font-size: 1.1rem;
   margin-top: 0.5rem;
 }
@@ -324,7 +329,7 @@ button:disabled {
   top: 2px;
   right: 2px;
   background: rgba(0, 0, 0, 0.7);
-  color: #fff;
+  color: var(--text-user);
   border-radius: 50%;
   width: 20px;
   height: 20px;
@@ -389,7 +394,7 @@ button:disabled {
   border-radius: var(--radius);
   overflow: hidden;
   display: flex;
-  flex: 1;
+  flex: 1 1 150px;
   align-items: center;
   justify-content: center;
   color: var(--text-muted);
@@ -459,7 +464,7 @@ button:disabled {
 .badge-danger {
   display: inline-block;
   background: var(--danger);
-  color: #fff;
+  color: var(--text-user);
   font-size: 0.75rem;
   padding: 0.2rem 0.5rem;
   border-radius: 4px;
@@ -470,7 +475,7 @@ button:disabled {
 .badge-warning { 
   display: inline-block; 
   background: var(--warning); 
-  color: #000; 
+  color: var(--text-primary); 
   font-size: 0.75rem; 
   padding: 0.2rem 0.5rem; 
   border-radius: 4px; 
@@ -512,6 +517,7 @@ button:disabled {
 
 .video-layout {
   display: flex;
+  flex-wrap: wrap;
   justify-content: space-between;
   margin-bottom: 1rem;
   height: 100%;

@@ -36,8 +36,8 @@
 
     <!-- Active Camera & Inspection View -->
     <div id="camera-step" class="step-container" style="display: none;">
-      <div class="camera-tip-banner"
-        style="background: var(--warning); color: #000; padding: 0.5rem; text-align: center; font-size: 0.85rem; font-weight: bold; border-radius: 8px 8px 0 0;">
+      <div class="camera-tip-banner badge-warning"
+        style="padding: 0.5rem; text-align: center; font-size: 0.85rem; font-weight: bold; border-radius: 8px 8px 0 0; margin-bottom: 0;">
         💡 Tip: Make sure you can see at least two wheels and the ground underneath them.
       </div>
       <div id="customer-camera-preview" class="camera-viewport">
@@ -94,8 +94,8 @@
       <p>Due to the severity of this collision, a Senior Claims Adjuster is available immediately via live video to
         dispatch towing and manage rental arrangements.</p>
       <div class="modal-actions">
-        <button id="btn-connect-agent" class="btn-danger btn-large">Connect to Live Adjuster</button>
-        <button id="btn-decline-call" class="btn-secondary" commandfor="escalation-dialog" command="close">I'll Wait for
+        <br><br><button id="btn-connect-agent" class="btn-danger btn-large">Connect to Live Adjuster</button>
+        <br><br><button onclick="window.location.reload()" id="btn-decline-call" class="btn-secondary btn-large" commandfor="escalation-dialog" command="close">I'll Wait for
           Email</button>
       </div>
     </div>

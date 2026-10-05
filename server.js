@@ -356,25 +356,25 @@ app.post('/api/process-claim', async (req, res) => {
 
     // Build an array of damaged parts for the UI message
     const damagedParts = [];
-    if (evaluation.damage_front.noul > 0.8) damagedParts.push("Front");
-    if (evaluation.damage_rear.noul > 0.8) damagedParts.push("Rear");
-    if (evaluation.damage_side.noul > 0.8) damagedParts.push("Side Panels");
-    if (evaluation.glass_shattered.noul > 0.8) damagedParts.push("Glass");
+    if (evaluation.damage_front.noul > 0.7) damagedParts.push("Front");
+    if (evaluation.damage_rear.noul > 0.7) damagedParts.push("Rear");
+    if (evaluation.damage_side.noul > 0.7) damagedParts.push("Side Panels");
+    if (evaluation.glass_shattered.noul > 0.7) damagedParts.push("Glass");
 
     // Server-Side Decision Engine
     const isSevere =
       evaluation.severity.choice === "severe_total_loss" ||
-      evaluation.airbags_deployed.noul > 0.8 ||
-      evaluation.flat_tires.noul > 0.8 ||
-      evaluation.requires_tow.noul > 0.8;
+      evaluation.airbags_deployed.noul > 0.5 ||
+      evaluation.flat_tires.noul > 0.5 ||
+      evaluation.requires_tow.noul > 0.5;
 
     incidentStore.set(sessionId, { user, evaluation, imageUrls });
 
     if (isSevere) {
       const issues = [];
-      if (evaluation.airbags_deployed.noul > 0.8) issues.push("Airbags Deployed");
-      if (evaluation.flat_tires.noul > 0.8) issues.push("Flat Tire(s)");
-      if (evaluation.requires_tow.noul > 0.8) issues.push("Tow Required");
+      if (evaluation.airbags_deployed.noul > 0.5) issues.push("Airbags Deployed");
+      if (evaluation.flat_tires.noul > 0.5) issues.push("Flat Tire(s)");
+      if (evaluation.requires_tow.noul > 0.5) issues.push("Tow Required");
 
       res.json({
         decision: 'escalate',

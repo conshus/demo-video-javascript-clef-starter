@@ -37,7 +37,7 @@ const submitBtn = document.getElementById('btn-submit-claim');
 
 
 // Create a helper function to compress it using Canvas
-function compressImage(dataUrl, quality = 0.8) {
+function compressImage(dataUrl, quality = 0.9) {
   return new Promise((resolve) => {
     const img = new Image();
     img.src = dataUrl;
@@ -54,7 +54,7 @@ function compressImage(dataUrl, quality = 0.8) {
       // Draw the PNG onto the canvas
       ctx.drawImage(img, 0, 0, img.width, img.height);
       
-      // Export as a compressed JPEG at 80% quality
+      // Export as a compressed JPEG at 90% quality
       const compressedDataUri = canvas.toDataURL('image/jpeg', quality);
       // console.log("Compressed Data URI:", compressedDataUri);
       resolve(compressedDataUri);
@@ -119,7 +119,7 @@ snapBtn.addEventListener('click', async () => {
   if (!rawBase64) return;
 
   const fullDataUri = `data:image/png;base64,${rawBase64}`;
-  const compressedJpegUri = await compressImage(fullDataUri, 0.8);
+  const compressedJpegUri = await compressImage(fullDataUri, 0.9);
   capturedPhotos.push(compressedJpegUri);
   renderGallery();
   updateSnapButton();

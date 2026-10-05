@@ -29,8 +29,8 @@
 
     <!-- Sample Inspection Images Section -->
     <section class="portal-card">
-      <h2>2. Sample Test Props</h2>
-      <p>Need sample damage photos to point your camera at? Open an AI inspection deck below:</p>
+      <h2>2. Sample Test Pnotos</h2>
+      <p>Need sample damage photos to point your camera at? Here are some different scenarios:</p>
       
       <div class="sample-actions">
         <!-- Zero-JS Invoker Commands: commandfor & command -->
@@ -40,11 +40,14 @@
         <button type="button" class="btn-danger" commandfor="total-modal" command="show-modal">
           View Total Loss Sample Pictures
         </button>
+        <button type="button" class="btn-primary" commandfor="no-decision-modal" command="show-modal">
+          View No Decision Sample Pictures
+        </button>
       </div>
     </section>
   </main>
 
-  <!-- ZERO-JS MODAL & CAROUSEL: Minor Damage Deck -->
+  <!-- Minor Damage Sample Photos -->
   <dialog id="minor-modal" class="deck-dialog">
     <header class="deck-header">
       <h3>Sample Scenario: Minor Damage</h3>
@@ -78,7 +81,7 @@
     </div>
   </dialog>
 
-  <!-- ZERO-JS MODAL & CAROUSEL: Total Loss Deck -->
+  <!-- Total Loss Sample Photos -->
   <dialog id="total-modal" class="deck-dialog">
     <header class="deck-header">
       <h3>Sample Scenario: Total Loss / Major Collision</h3>
@@ -111,6 +114,42 @@
       </nav>
     </div>
   </dialog>
+
+
+  <!-- Total Loss Sample Photos -->
+  <dialog id="no-decision-modal" class="deck-dialog">
+    <header class="deck-header">
+      <h3>Sample Scenario: AI unable to determine damage</h3>
+      <button type="button" class="close-btn" commandfor="no-decision-modal" command="close">✕</button>
+    </header>
+    <div class="carousel-container">
+      <div class="carousel-track" id="no-decision-track">
+        <div class="carousel-slide" id="no-decision-1">
+          <img src="/samples/no_decision-driver-front.png" alt="View of the vehicle from the front driver side">
+          <span>Photo 1/4: Front Driver</span>
+        </div>
+        <div class="carousel-slide" id="no-decision-2">
+          <img src="/samples/no_decision-passenger-front.png" alt="View of the vehicle from the front passenger side">
+          <span>Photo 2/4: Front Passenger</span>
+        </div>
+        <div class="carousel-slide" id="no-decision-3">
+          <img src="/samples/no_decision-passenger-rear.png" alt="View of the vehicle from the rear passenger side">
+          <span>Photo 3/4: Rear Passenger</span>
+        </div>
+        <div class="carousel-slide" id="no-decision-4">
+          <img src="/samples/no_decision-driver-rear.png" alt="View of the vehicle from the rear driver side">
+          <span>Photo 4/4: Rear Driver</span>
+        </div>
+      </div>
+      <nav class="carousel-nav">
+        <a href="#no-decision-1">1</a>
+        <a href="#no-decision-2">2</a>
+        <a href="#no-decision-3">3</a>
+        <a href="#no-decision-4">4</a>
+      </nav>
+    </div>
+  </dialog>
+
 
   <script>
     // Dynamically generate QR code to match current hosting port/domain
