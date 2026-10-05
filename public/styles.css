@@ -203,7 +203,7 @@ button:disabled {
   aspect-ratio: 16 / 9; */
   height: 100%;
   max-height: 70vh;
-  aspect-ratio: 9 / 16;
+  aspect-ratio: 16 / 9;
   object-fit: cover;
   border-radius: 8px;
 }

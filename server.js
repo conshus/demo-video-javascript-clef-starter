@@ -268,7 +268,7 @@ app.post('/api/process-claim', async (req, res) => {
   //   }
   // };
   const clefPayload = {
-    model: "clef-flash",
+    model: "clef",
     state: "Evaluate the vehicle damage in the provided 360-degree walkaround images.",
     images: images, // Pass the array directly (Clef accepts up to 4)
     questions: {
@@ -276,7 +276,7 @@ app.post('/api/process-claim', async (req, res) => {
         type: "choice",
         instructions: "What is the severity of the damage present on the vehicle?",
         criteria: {
-          minor_cosmetic: "Minor Cosmetic",
+          minor_cosmetic: "Minor Cosmetic including scratches, dents and paint damage",
           moderate_drivable: "Moderate Drivable",
           severe_total_loss: "Severe Total Loss",
           none: "None"
@@ -284,15 +284,15 @@ app.post('/api/process-claim', async (req, res) => {
       },
       damage_front: {
         type: "noul",
-        instructions: "Is there damage to the front of the vehicle?",
+        instructions: "Is there damage to the front of the vehicle including scratches, dents, or paint damage?",
       },
       damage_rear: {
         type: "noul",
-        instructions: "Is there damage to the rear of the vehicle?",
+        instructions: "Is there damage to the rear of the vehicle including scratches, dents, or paint damage?",
       },
       damage_side: {
         type: "noul",
-        instructions: "Is there damage to any side of the vehicle?",
+        instructions: "Is there damage to any side of the vehicle including scratches, dents, or paint damage?",
       },
       glass_shattered: {
         type: "noul",
@@ -316,7 +316,7 @@ app.post('/api/process-claim', async (req, res) => {
   // console.log("State character count:", clefPayload.state.length);
 
   try {
-    const clefResponse = await fetch(`https://api.cloudflare.com/client/v4/accounts/${process.env.CLOUDFLARE_ACCOUNT_ID}/ai/run/@cf/cloudflare/clef-flash`, {
+    const clefResponse = await fetch(`https://api.cloudflare.com/client/v4/accounts/${process.env.CLOUDFLARE_ACCOUNT_ID}/ai/run/@cf/cloudflare/clef`, {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${process.env.CLOUDFLARE_AUTH_TOKEN}`,
@@ -380,7 +380,7 @@ app.post('/api/process-claim', async (req, res) => {
         decision: 'escalate',
         ui_message: `Critical safety issues detected: ${issues.join(", ")}.\nDamaged zones: ${damagedParts.join(", ") || "Multiple"}.`
       });
-    } else if (damagedParts.length === 0 || evaluation.severity.choice === "none") {
+    } else if (damagedParts.length === 0 && evaluation.severity.choice === "none") {
       res.json({
         decision: 'no_damage',
         ui_message: `No significant damage detected by the AI.\nVehicle appears drivable.`
