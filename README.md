@@ -18,9 +18,9 @@ The easiest way to run this application is by using GitHub Codespaces. This sets
 
 Once the environment loads, the setup script will run automatically to configure your Vonage application!
 
-The setup script will create the Vonage Application needed for the Video chat. It will ask for API Key and API Secret which can be found in the [Vonage Dashboard](https://dashboard.vonage.com)
+The setup script will create the Vonage Application needed for the Video chat. It will ask for `API Key` and `API Secret` which can be found in the [Vonage Dashboard](https://dashboard.vonage.com)
 
-The script will also ask for your Cloudflare Account ID and Auth/API Key. You can find these in the [Cloudflare dashboard](https://dash.cloudflare.com/).
+The script will also ask for your Cloudflare `Account ID` and `Auth/API Key`. You can find these in the [Cloudflare dashboard](https://dash.cloudflare.com/).
 
 ## How to Use
 Once setup, there should be a URL in the terminal that you can click to launch the application in a new browser tab. If not, you can go to the `Ports` tab next to the `Terminal` tab and right click the URL under `Forwarded Address`.
