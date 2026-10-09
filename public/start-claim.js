@@ -120,7 +120,8 @@ snapBtn.addEventListener('click', async () => {
 
   const fullDataUri = `data:image/png;base64,${rawBase64}`;
   const compressedJpegUri = await compressImage(fullDataUri, 0.9);
-  capturedPhotos.push(compressedJpegUri);
+  // capturedPhotos.push(compressedJpegUri);
+  capturedPhotos.push(fullDataUri);
   renderGallery();
   updateSnapButton();
 });

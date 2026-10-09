@@ -214,11 +214,13 @@ app.post('/api/process-claim', async (req, res) => {
   const imageUrls = [];
   images.forEach((imgBase64, index) => {
     // Strip the data:image/png;base64, prefix before saving to disk
-    // const base64Data = imgBase64.replace(/^data:image\/png;base64,/, "");
-    const base64Data = imgBase64.replace(/^data:image\/jpeg;base64,/, "");
+    const base64Data = imgBase64.replace(/^data:image\/png;base64,/, "");
+    // const base64Data = imgBase64.replace(/^data:image\/jpeg;base64,/, "");
     fs.mkdirSync(`${uploadsDir}/${sessionId}`, { recursive: true });
-    fs.writeFileSync(`${uploadsDir}/${sessionId}/claim_img${index}.jpg`, base64Data, 'base64');
-    imageUrls.push(`/uploads/${sessionId}/claim_img${index}.jpg`);
+    fs.writeFileSync(`${uploadsDir}/${sessionId}/claim_img${index}.png`, base64Data, 'base64');
+    imageUrls.push(`/uploads/${sessionId}/claim_img${index}.png`);
+    // fs.writeFileSync(`${uploadsDir}/${sessionId}/claim_img${index}.jpg`, base64Data, 'base64');
+    // imageUrls.push(`/uploads/${sessionId}/claim_img${index}.jpg`);
   });
 
   // const formattedImages = images.map((dataUri) => {
